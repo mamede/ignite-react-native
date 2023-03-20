@@ -32,7 +32,9 @@ export function Groups() {
     } catch (error) {
       Alert.alert('Turmas', 'Não foi possível carregar as turmas');
       console.log(error);
-    }
+    } finally {
+      setIsLoading(false);
+    } 
   }
 
   function handleOpenGroup(group: string) {
