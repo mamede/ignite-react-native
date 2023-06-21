@@ -13,8 +13,8 @@ import { Loading } from '@components/Loading/Loading';
 // THEME
 import { THEME } from './src/theme';
 
-// SCREENS
-import { SignUp } from '@screens/SignUp/SignUp';
+// CONTEXTS
+import { AuthContextProvider } from '@contexts/AuthContext';
 
 export default function App() {
   const [fontsLoaded] = useFonts({ Roboto_400Regular, Roboto_700Bold });
@@ -26,7 +26,9 @@ export default function App() {
         backgroundColor="transparent"
         translucent
       />
-      {fontsLoaded ? <Routes /> : <Loading />}
+      <AuthContextProvider>
+        {fontsLoaded ? <Routes /> : <Loading />}
+      </AuthContextProvider>
     </NativeBaseProvider>
   );
 }
