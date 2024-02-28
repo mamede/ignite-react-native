@@ -2,7 +2,7 @@ import { createContext, ReactNode, useEffect, useState } from "react";
 
 // STORAGE
 import { storageUserGet, storageUserRemove, storageUserSave } from '@storage/user/storageUser';
-import { storageAuthTokenSave, storageAuthTokenGet, storageAuthTokenRemove } from '@storage/storageAuthToken';  
+import { storageAuthTokenSave, storageAuthTokenGet, storageAuthTokenRemove } from '@storage/storageAuthToken';
 
 // SERVICES
 import { api } from '@services/api';
@@ -13,6 +13,7 @@ import { UserDTO } from "@dtos/UserDTO";
 export type AuthContextDataProps = {
   user: UserDTO;
   signIn: (email: string, password: string) => Promise<void>;
+  updateUserProfile: (userUpdated: UserDTO) => Promise<void>;
   signOut: () => Promise<void>;
   isLoadingUserStorageData: boolean;
 }
@@ -23,16 +24,16 @@ export type AuthContextProviderProps = {
 
 export const AuthContext = createContext<AuthContextDataProps>({} as AuthContextDataProps);
 
-export function AuthContextProvider({ children }: AuthContextProviderProps)  {
+export function AuthContextProvider({ children }: AuthContextProviderProps) {
   const [user, setUser] = useState<UserDTO>({} as UserDTO);
-  const [isLoadingUserStorageData, setIsLoadingUserStorageData] = useState(true); 
+  const [isLoadingUserStorageData, setIsLoadingUserStorageData] = useState(true);
 
   async function userAndTokenUpdate(userData: UserDTO, token: string) {
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     setUser(userData);
   }
-  
+
   async function storageUserAndToken(userData: UserDTO, token: string) {
     try {
       setIsLoadingUserStorageData(true);
@@ -76,6 +77,15 @@ export function AuthContextProvider({ children }: AuthContextProviderProps)  {
     }
   }
 
+  async function updateUserProfile(userUpdated: UserDTO) {
+    try {
+      setUser(userUpdated);
+      await storageUserSave(userUpdated);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async function loadUserData() {
     try {
       setIsLoadingUserStorageData(true);
@@ -84,7 +94,7 @@ export function AuthContextProvider({ children }: AuthContextProviderProps)  {
 
       if (token && userLogged) {
         userAndTokenUpdate(userLogged, token);
-      } 
+      }
 
     } catch (error) {
       throw error
@@ -95,10 +105,16 @@ export function AuthContextProvider({ children }: AuthContextProviderProps)  {
 
   useEffect(() => {
     loadUserData()
-  },[])
+  }, [])
 
   return (
-    <AuthContext.Provider value={{ user, signIn, signOut, isLoadingUserStorageData }}>
+    <AuthContext.Provider value={{
+      user,
+      signIn,
+      updateUserProfile,
+      signOut,
+      isLoadingUserStorageData
+    }}>
       {children}
     </AuthContext.Provider>
   )
