@@ -8,6 +8,8 @@ import { Center, ScrollView, VStack, Skeleton, Text, Heading, useToast } from 'n
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 
+import defaulUserPhotoImg from '@assets/userPhotoDefault.png';
+
 // COMPONENTS
 import { ScreenHeader } from '@components/ScreenHeader/ScreenHeader';
 import { UserPhoto } from '@components/UserPhoto/UserPhoto';
@@ -80,7 +82,35 @@ export function Profile() {
           })
         }
 
-        setUserPhoto(photoSelected.assets[0].uri);
+        const fileExtension = photoSelected.assets[0].uri.split('.').pop();
+
+        const photoFile = {
+          name: `${user.name}.${fileExtension}`.toLowerCase(),
+          uri: photoSelected.assets[0].uri,
+          type: `${photoSelected.assets[0].type}/${fileExtension}`
+        } as any;
+
+        const userPhotoUploadForm = new FormData();
+
+        userPhotoUploadForm.append('avatar', photoFile);
+
+        const avatarUpdtedResponse = await api.patch('/users/avatar', userPhotoUploadForm, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        const userUpdated = user;
+
+        userUpdated.avatar = avatarUpdtedResponse.data.avatar;
+
+        await updateUserProfile(userUpdated);
+
+        toast.show({
+          title: 'Foto atualizada!',
+          placement: 'top',
+          bgColor: 'green.500'
+        })
       }
 
     } catch (error) {
@@ -136,7 +166,11 @@ export function Profile() {
             />
             :
             <UserPhoto
-              source={{ uri: userPhoto }}
+              source={
+                user.avatar
+                  ? { uri: `${api.defaults.baseURL}/avatar/${user.avatar}` }
+                  : defaulUserPhotoImg
+              }
               alt="Foto do usuário"
               size={PHOTO_SIZE}
             />
